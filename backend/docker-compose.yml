@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: bike_tracker_api
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    volumes:
+      - .:/app                    # Mount source code for live reload
+      - /app/tmp                  # Exclude tmp directory (Air's build artifacts)
+    depends_on:
+      - db
+    command: ["air", "-c", ".air.toml"]
+
+  db:
+    image: postgres:16
+    container_name: bike_tracker_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: biketracker
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  pgdata:
