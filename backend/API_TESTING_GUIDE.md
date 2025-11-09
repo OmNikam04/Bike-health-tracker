@@ -1,382 +1,513 @@
-# 🧪 API Testing Guide - User Operations
+# API Testing Guide - Bike Health Tracker
+
+This guide provides request bodies and curl commands to test all bike and fuel log APIs.
 
 ## Prerequisites
 
-Make sure your server is running:
-```bash
-make run
-```
-
-Watch the logs in another terminal:
-```bash
-make logs
-```
+1. **Start the server**: `cd backend && go run cmd/server/main.go`
+2. **Create a user and login** to get an access token
+3. **Replace `YOUR_ACCESS_TOKEN`** with your actual JWT token in all requests below
 
 ---
 
-## 📝 Test Scenarios
+## 🔐 Step 1: Authentication (Get Access Token)
 
-### **Test 1: Register a New User** ✅
-
-**Endpoint:** `POST /api/v1/users`  
-**Auth Required:** No
-
+### Register a User
 ```bash
-curl -X POST http://localhost:8080/api/v1/users \
+curl -X POST http://localhost:8080/api/v1/user/register \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "John Doe",
-    "email": "john@example.com",
-    "password": "password123"
+    "email": "test@example.com",
+    "password": "Test@1234",
+    "name": "Test User"
   }'
 ```
 
-**Expected Response (201 Created):**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid-here",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "created_at": "2024-01-01T00:00:00Z",
-    "updated_at": "2024-01-01T00:00:00Z"
-  },
-  "message": "User created successfully"
-}
-```
-
----
-
-### **Test 2: Try Duplicate Email** ❌
-
-**Endpoint:** `POST /api/v1/users`  
-**Auth Required:** No
-
+### Login
 ```bash
-curl -X POST http://localhost:8080/api/v1/users \
+curl -X POST http://localhost:8080/api/v1/user/login \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Jane Doe",
-    "email": "john@example.com",
-    "password": "password456"
+    "email": "test@example.com",
+    "password": "Test@1234"
   }'
 ```
 
-**Expected Response (400 Bad Request):**
-```json
-{
-  "error": "creation_failed",
-  "message": "user with this email already exists"
-}
-```
-
----
-
-### **Test 3: Login with Valid Credentials** 🔐
-
-**Endpoint:** `POST /api/v1/users/login`  
-**Auth Required:** No
-
-```bash
-curl -X POST http://localhost:8080/api/v1/users/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "john@example.com",
-    "password": "password123"
-  }'
-```
-
-**Expected Response (200 OK):**
+**Response:**
 ```json
 {
   "success": true,
   "data": {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "user": {
-      "id": "uuid-here",
-      "name": "John Doe",
-      "email": "john@example.com",
-      "created_at": "2024-01-01T00:00:00Z",
-      "updated_at": "2024-01-01T00:00:00Z"
-    }
-  },
-  "message": "Login successful"
-}
-```
-
-**⚠️ IMPORTANT:** Save the `token` value for the next tests!
-
----
-
-### **Test 4: Login with Invalid Password** ❌
-
-**Endpoint:** `POST /api/v1/users/login`  
-**Auth Required:** No
-
-```bash
-curl -X POST http://localhost:8080/api/v1/users/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "john@example.com",
-    "password": "wrongpassword"
-  }'
-```
-
-**Expected Response (401 Unauthorized):**
-```json
-{
-  "error": "login_failed",
-  "message": "invalid email or password"
-}
-```
-
----
-
-### **Test 5: Get User by ID (With Token)** 🔑
-
-**Endpoint:** `GET /api/v1/users/:id`  
-**Auth Required:** Yes
-
-```bash
-# Replace {USER_ID} with actual user ID from Test 1
-# Replace {TOKEN} with token from Test 3
-
-curl http://localhost:8080/api/v1/users/{USER_ID} \
-  -H "Authorization: Bearer {TOKEN}"
-```
-
-**Expected Response (200 OK):**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid-here",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "created_at": "2024-01-01T00:00:00Z",
-    "updated_at": "2024-01-01T00:00:00Z"
+    "refresh_token": "abc123...",
+    "user": { ... }
   }
 }
 ```
 
----
-
-### **Test 6: Get User Without Token** ❌
-
-**Endpoint:** `GET /api/v1/users/:id`  
-**Auth Required:** Yes
-
-```bash
-curl http://localhost:8080/api/v1/users/{USER_ID}
-```
-
-**Expected Response (401 Unauthorized):**
-```json
-{
-  "error": "unauthorized",
-  "message": "Missing authorization token"
-}
-```
+**Copy the `token` value** and use it as `YOUR_ACCESS_TOKEN` below.
 
 ---
 
-### **Test 7: Update User Profile** ✏️
+## 🏍️ Step 2: Bike APIs
 
-**Endpoint:** `PUT /api/v1/users/:id`  
-**Auth Required:** Yes
+### 1. Register a New Bike (POST /api/v1/bikes)
 
+**Minimal Request (only required fields):**
 ```bash
-# Update name only
-curl -X PUT http://localhost:8080/api/v1/users/{USER_ID} \
-  -H "Authorization: Bearer {TOKEN}" \
+curl -X POST http://localhost:8080/api/v1/bikes \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -d '{
-    "name": "John Updated"
+    "brand": "Honda",
+    "model": "Activa 6G",
+    "initial_odometer": 0
   }'
 ```
 
-**Expected Response (200 OK):**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid-here",
-    "name": "John Updated",
-    "email": "john@example.com",
-    "created_at": "2024-01-01T00:00:00Z",
-    "updated_at": "2024-01-01T00:05:00Z"
-  },
-  "message": "User updated successfully"
-}
-```
-
----
-
-### **Test 8: Update Password** 🔒
-
-**Endpoint:** `PUT /api/v1/users/:id`  
-**Auth Required:** Yes
-
+**Complete Request (all fields):**
 ```bash
-curl -X PUT http://localhost:8080/api/v1/users/{USER_ID} \
-  -H "Authorization: Bearer {TOKEN}" \
+curl -X POST http://localhost:8080/api/v1/bikes \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -d '{
-    "password": "newpassword123"
+    "brand": "Royal Enfield",
+    "model": "Classic 350",
+    "year": 2023,
+    "registration_number": "MH12AB1234",
+    "purchase_date": "2023-01-15T00:00:00Z",
+    "purchase_price": 185000,
+    "initial_odometer": 0,
+    "fuel_type": "Petrol",
+    "photo_url": "https://example.com/bike.jpg",
+    "notes": "My first bike!"
   }'
 ```
 
-**Expected Response (200 OK):**
+**Request Body Fields:**
 ```json
 {
-  "success": true,
-  "data": {
-    "id": "uuid-here",
-    "name": "John Updated",
-    "email": "john@example.com",
-    "created_at": "2024-01-01T00:00:00Z",
-    "updated_at": "2024-01-01T00:10:00Z"
-  },
-  "message": "User updated successfully"
+  "brand": "string (required)",
+  "model": "string (required)",
+  "year": "integer (optional)",
+  "registration_number": "string (optional, unique)",
+  "purchase_date": "ISO 8601 datetime (optional)",
+  "purchase_price": "number (optional)",
+  "initial_odometer": "integer (required, default: 0)",
+  "fuel_type": "string (optional)",
+  "photo_url": "string (optional)",
+  "notes": "string (optional)"
 }
 ```
 
----
-
-### **Test 9: List All Users** 📋
-
-**Endpoint:** `GET /api/v1/users`  
-**Auth Required:** Yes
-
-```bash
-# Default pagination (limit=10, offset=0)
-curl http://localhost:8080/api/v1/users \
-  -H "Authorization: Bearer {TOKEN}"
-
-# Custom pagination
-curl "http://localhost:8080/api/v1/users?limit=5&offset=0" \
-  -H "Authorization: Bearer {TOKEN}"
-```
-
-**Expected Response (200 OK):**
+**Response:**
 ```json
 {
   "success": true,
   "data": {
-    "users": [
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "user_id": "...",
+    "brand": "Royal Enfield",
+    "model": "Classic 350",
+    "year": 2023,
+    "registration_number": "MH12AB1234",
+    "purchase_date": "2023-01-15T00:00:00Z",
+    "purchase_price": 185000,
+    "initial_odometer": 0,
+    "current_odometer": 0,
+    "fuel_type": "Petrol",
+    "photo_url": "https://example.com/bike.jpg",
+    "notes": "My first bike!",
+    "created_at": "2024-11-09T10:30:00Z",
+    "updated_at": "2024-11-09T10:30:00Z",
+    "total_fuel_logs": 0,
+    "latest_mileage": null,
+    "average_mileage": null
+  },
+  "message": "Bike registered successfully"
+}
+```
+
+**Save the `id` from response** - you'll need it for other requests!
+
+---
+
+### 2. List All My Bikes (GET /api/v1/bikes)
+
+```bash
+curl -X GET http://localhost:8080/api/v1/bikes \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "bikes": [
       {
-        "id": "uuid-1",
-        "name": "John Updated",
-        "email": "john@example.com",
-        "created_at": "2024-01-01T00:00:00Z",
-        "updated_at": "2024-01-01T00:10:00Z"
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "brand": "Royal Enfield",
+        "model": "Classic 350",
+        ...
       }
     ],
-    "total": 1,
-    "limit": 10,
-    "offset": 0
+    "total": 1
   }
 }
 ```
 
 ---
 
-### **Test 10: Delete User** 🗑️
-
-**Endpoint:** `DELETE /api/v1/users/:id`  
-**Auth Required:** Yes
+### 3. Get Bike Details (GET /api/v1/bikes/:id)
 
 ```bash
-curl -X DELETE http://localhost:8080/api/v1/users/{USER_ID} \
-  -H "Authorization: Bearer {TOKEN}"
+curl -X GET http://localhost:8080/api/v1/bikes/550e8400-e29b-41d4-a716-446655440000 \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
-**Expected Response (200 OK):**
+**Replace `550e8400-e29b-41d4-a716-446655440000` with your actual bike ID.**
+
+---
+
+### 4. Update Bike (PUT /api/v1/bikes/:id)
+
+**All fields are optional** - only send what you want to update:
+
+```bash
+curl -X PUT http://localhost:8080/api/v1/bikes/550e8400-e29b-41d4-a716-446655440000 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{
+    "year": 2024,
+    "current_odometer": 1500,
+    "notes": "Updated notes - bike is running great!"
+  }'
+```
+
+**Request Body (all optional):**
 ```json
 {
-  "success": true,
-  "message": "User deleted successfully"
+  "brand": "string",
+  "model": "string",
+  "year": "integer",
+  "registration_number": "string",
+  "purchase_date": "ISO 8601 datetime",
+  "purchase_price": "number",
+  "current_odometer": "integer",
+  "fuel_type": "string",
+  "photo_url": "string",
+  "notes": "string"
 }
 ```
 
-**Note:** This is a soft delete. The user is marked as deleted but not removed from the database.
+---
+
+### 5. Delete Bike (DELETE /api/v1/bikes/:id)
+
+```bash
+curl -X DELETE http://localhost:8080/api/v1/bikes/550e8400-e29b-41d4-a716-446655440000 \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+**⚠️ Important Notes:**
+- This is a **soft delete** - the bike is marked as deleted but not removed from database
+- All fuel logs for this bike are also soft-deleted (cascade delete)
+- You **can reuse the same registration number** after deleting a bike
+- Soft-deleted bikes won't appear in list/get queries
 
 ---
 
-## 🔄 Complete Test Flow
+## ⛽ Step 3: Fuel Log APIs
 
-Here's a complete test flow you can run:
+### 1. Add First Fuel Log (POST /api/v1/bikes/:bike_id/fuel-logs)
 
+**First fuel log (baseline - no mileage calculated):**
 ```bash
-# 1. Register user
-RESPONSE=$(curl -s -X POST http://localhost:8080/api/v1/users \
+curl -X POST http://localhost:8080/api/v1/bikes/550e8400-e29b-41d4-a716-446655440000/fuel-logs \
   -H "Content-Type: application/json" \
-  -d '{"name":"Test User","email":"test@example.com","password":"test123"}')
-echo "Register: $RESPONSE"
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{
+    "date": "2024-11-01T10:00:00Z",
+    "odometer_reading": 1000,
+    "liters": 5.0,
+    "price_per_liter": 105.50
+  }'
+```
 
-# 2. Login
-LOGIN_RESPONSE=$(curl -s -X POST http://localhost:8080/api/v1/users/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"test123"}')
-echo "Login: $LOGIN_RESPONSE"
+**Request Body Fields:**
+```json
+{
+  "date": "ISO 8601 datetime (required)",
+  "odometer_reading": "integer (required)",
+  "liters": "number (required)",
+  "price_per_liter": "number (required)",
+  "fuel_type": "string (optional)",
+  "is_full_tank": "boolean (optional, default: true)",
+  "location": "string (optional)",
+  "notes": "string (optional)"
+}
+```
 
-# Extract token (requires jq)
-TOKEN=$(echo $LOGIN_RESPONSE | jq -r '.data.token')
-USER_ID=$(echo $LOGIN_RESPONSE | jq -r '.data.user.id')
-
-echo "Token: $TOKEN"
-echo "User ID: $USER_ID"
-
-# 3. Get user
-curl -s http://localhost:8080/api/v1/users/$USER_ID \
-  -H "Authorization: Bearer $TOKEN" | jq
-
-# 4. Update user
-curl -s -X PUT http://localhost:8080/api/v1/users/$USER_ID \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Updated Name"}' | jq
-
-# 5. List users
-curl -s http://localhost:8080/api/v1/users \
-  -H "Authorization: Bearer $TOKEN" | jq
-
-# 6. Delete user
-curl -s -X DELETE http://localhost:8080/api/v1/users/$USER_ID \
-  -H "Authorization: Bearer $TOKEN" | jq
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "...",
+    "bike_id": "550e8400-e29b-41d4-a716-446655440000",
+    "date": "2024-11-01T10:00:00Z",
+    "odometer_reading": 1000,
+    "liters": 5.0,
+    "price_per_liter": 105.50,
+    "total_cost": 527.50,
+    "fuel_type": "",
+    "mileage": null,
+    "distance_covered": null,
+    "is_full_tank": true,
+    "location": "",
+    "notes": "",
+    "created_at": "2024-11-09T10:30:00Z",
+    "updated_at": "2024-11-09T10:30:00Z"
+  },
+  "message": "Fuel log added successfully"
+}
 ```
 
 ---
 
-## 🛠️ Troubleshooting
+### 2. Add Second Fuel Log (Mileage Calculation Happens!)
 
-### Issue: "Missing authorization token"
-**Solution:** Make sure you include the `Authorization: Bearer {TOKEN}` header
+```bash
+curl -X POST http://localhost:8080/api/v1/bikes/550e8400-e29b-41d4-a716-446655440000/fuel-logs \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{
+    "date": "2024-11-05T14:30:00Z",
+    "odometer_reading": 1200,
+    "liters": 4.0,
+    "price_per_liter": 106.00,
+    "fuel_type": "Petrol",
+    "is_full_tank": true,
+    "location": "Shell Petrol Pump, Mumbai",
+    "notes": "Highway ride"
+  }'
+```
 
-### Issue: "Invalid or expired token"
-**Solution:** Login again to get a fresh token (tokens expire after 24 hours)
-
-### Issue: "validation_failed"
-**Solution:** Check your request body matches the required format
-
-### Issue: "user with this email already exists"
-**Solution:** Use a different email or delete the existing user first
-
----
-
-## 📊 API Endpoints Summary
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/api/v1/users` | ❌ | Register new user |
-| POST | `/api/v1/users/login` | ❌ | Login (get JWT token) |
-| GET | `/api/v1/users/:id` | ✅ | Get user by ID |
-| PUT | `/api/v1/users/:id` | ✅ | Update user profile |
-| DELETE | `/api/v1/users/:id` | ✅ | Delete user (soft delete) |
-| GET | `/api/v1/users` | ✅ | List all users (paginated) |
+**What happens:**
+- Distance covered = 1200 - 1000 = 200 km
+- **First log's mileage** is updated = 200 / 5.0 = **40 km/l**
+- Second log has no mileage yet (needs a third log)
 
 ---
 
-**Happy Testing! 🚀**
+### 3. Add Third Fuel Log
+
+```bash
+curl -X POST http://localhost:8080/api/v1/bikes/550e8400-e29b-41d4-a716-446655440000/fuel-logs \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{
+    "date": "2024-11-09T09:00:00Z",
+    "odometer_reading": 1380,
+    "liters": 4.5,
+    "price_per_liter": 107.00,
+    "fuel_type": "Petrol",
+    "is_full_tank": true,
+    "location": "HP Petrol Pump",
+    "notes": "City riding"
+  }'
+```
+
+**What happens:**
+- Distance covered = 1380 - 1200 = 180 km
+- **Second log's mileage** is updated = 180 / 4.0 = **45 km/l**
+
+---
+
+### 4. List All Fuel Logs (GET /api/v1/bikes/:bike_id/fuel-logs)
+
+```bash
+curl -X GET http://localhost:8080/api/v1/bikes/550e8400-e29b-41d4-a716-446655440000/fuel-logs \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "fuel_logs": [
+      {
+        "id": "...",
+        "odometer_reading": 1380,
+        "mileage": null,
+        ...
+      },
+      {
+        "id": "...",
+        "odometer_reading": 1200,
+        "mileage": 45.0,
+        "distance_covered": 180,
+        ...
+      },
+      {
+        "id": "...",
+        "odometer_reading": 1000,
+        "mileage": 40.0,
+        "distance_covered": 200,
+        ...
+      }
+    ],
+    "total": 3
+  }
+}
+```
+
+---
+
+### 5. Get Fuel Log Details (GET /api/v1/bikes/:bike_id/fuel-logs/:id)
+
+```bash
+curl -X GET http://localhost:8080/api/v1/bikes/550e8400-e29b-41d4-a716-446655440000/fuel-logs/FUEL_LOG_ID \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+---
+
+### 6. Update Fuel Log (PUT /api/v1/bikes/:bike_id/fuel-logs/:id)
+
+**All fields are optional:**
+
+```bash
+curl -X PUT http://localhost:8080/api/v1/bikes/550e8400-e29b-41d4-a716-446655440000/fuel-logs/FUEL_LOG_ID \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{
+    "liters": 4.2,
+    "price_per_liter": 106.50,
+    "notes": "Updated: Actually filled 4.2 liters"
+  }'
+```
+
+**⚠️ Note:** If you update `odometer_reading` or `date`, the mileage chain will be recalculated automatically.
+
+---
+
+### 7. Delete Fuel Log (DELETE /api/v1/bikes/:bike_id/fuel-logs/:id)
+
+```bash
+curl -X DELETE http://localhost:8080/api/v1/bikes/550e8400-e29b-41d4-a716-446655440000/fuel-logs/FUEL_LOG_ID \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+**⚠️ Note:** Deleting a fuel log will reset the mileage for the next log (if exists).
+
+---
+
+### 8. Get Fuel Statistics (GET /api/v1/bikes/:bike_id/fuel-stats)
+
+```bash
+curl -X GET http://localhost:8080/api/v1/bikes/550e8400-e29b-41d4-a716-446655440000/fuel-stats \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "bike_id": "550e8400-e29b-41d4-a716-446655440000",
+    "total_fuel_logs": 3,
+    "total_liters": 13.5,
+    "total_cost": 1434.50,
+    "total_distance": 380,
+    "average_mileage": 42.5,
+    "latest_mileage": 45.0,
+    "best_mileage": 45.0,
+    "worst_mileage": 40.0,
+    "average_cost_per_km": 3.78
+  }
+}
+```
+
+---
+
+## 📝 Complete Testing Flow
+
+Here's a step-by-step testing sequence:
+
+```bash
+# 1. Register and login
+curl -X POST http://localhost:8080/api/v1/user/register -H "Content-Type: application/json" -d '{"email":"test@example.com","password":"Test@1234","name":"Test User"}'
+TOKEN=$(curl -X POST http://localhost:8080/api/v1/user/login -H "Content-Type: application/json" -d '{"email":"test@example.com","password":"Test@1234"}' | jq -r '.data.token')
+
+# 2. Create a bike
+BIKE_ID=$(curl -X POST http://localhost:8080/api/v1/bikes -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{"brand":"Honda","model":"Activa","initial_odometer":0}' | jq -r '.data.id')
+
+# 3. Add fuel logs
+curl -X POST http://localhost:8080/api/v1/bikes/$BIKE_ID/fuel-logs -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{"date":"2024-11-01T10:00:00Z","odometer_reading":1000,"liters":5.0,"price_per_liter":105.50}'
+curl -X POST http://localhost:8080/api/v1/bikes/$BIKE_ID/fuel-logs -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{"date":"2024-11-05T14:00:00Z","odometer_reading":1200,"liters":4.0,"price_per_liter":106.00}'
+curl -X POST http://localhost:8080/api/v1/bikes/$BIKE_ID/fuel-logs -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{"date":"2024-11-09T09:00:00Z","odometer_reading":1380,"liters":4.5,"price_per_liter":107.00}'
+
+# 4. Get fuel stats
+curl -X GET http://localhost:8080/api/v1/bikes/$BIKE_ID/fuel-stats -H "Authorization: Bearer $TOKEN"
+
+# 5. List all bikes
+curl -X GET http://localhost:8080/api/v1/bikes -H "Authorization: Bearer $TOKEN"
+```
+
+---
+
+## 🧪 Postman Collection
+
+You can also import this as a Postman collection. Create a new collection with:
+
+1. **Environment Variables:**
+   - `base_url`: `http://localhost:8080`
+   - `token`: (set after login)
+   - `bike_id`: (set after creating bike)
+
+2. **Pre-request Script** (for authenticated requests):
+   ```javascript
+   pm.request.headers.add({
+     key: 'Authorization',
+     value: 'Bearer ' + pm.environment.get('token')
+   });
+   ```
+
+---
+
+## ✅ Expected Results
+
+After running the complete flow:
+
+1. ✅ User created and logged in
+2. ✅ Bike registered with initial odometer = 0
+3. ✅ First fuel log added (no mileage)
+4. ✅ Second fuel log added → First log now shows mileage = 40 km/l
+5. ✅ Third fuel log added → Second log now shows mileage = 45 km/l
+6. ✅ Fuel stats show average mileage = 42.5 km/l
+
+---
+
+## 🐛 Common Errors
+
+**401 Unauthorized:**
+- Token expired or invalid
+- Missing `Authorization` header
+
+**400 Bad Request:**
+- Invalid JSON format
+- Missing required fields
+- Validation errors (e.g., odometer < initial_odometer)
+
+**404 Not Found:**
+- Bike ID doesn't exist
+- Fuel log ID doesn't exist
+- Trying to access another user's bike
+
+---
+
+Happy Testing! 🚀
 
