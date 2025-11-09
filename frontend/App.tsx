@@ -5,10 +5,14 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useIsDarkMode } from './src/store/themeStore';
 import { getColors } from './src/constants/theme';
 import { ThemeToggle } from './src/components/common/ThemeToggle';
+import { healthCheck } from './src/api/auth.api';
+import { useState } from 'react';
 
 function AppContent() {
   const isDarkMode = useIsDarkMode();
   const colors = getColors(isDarkMode);
+  const [apiStatus, setApiStatus] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
 
   // Custom theme based on our color scheme
   const theme = {
@@ -26,6 +30,22 @@ function AppContent() {
     },
   };
 
+  const testBackendConnection = async () => {
+    setIsLoading(true);
+    setApiStatus('Testing...');
+
+    try {
+      const response = await healthCheck();
+      setApiStatus(`✅ Connected! ${response.message || 'Backend is healthy'}`);
+      console.log('Backend health check:', response);
+    } catch (error: any) {
+      setApiStatus(`❌ Failed: ${error.message || 'Cannot reach backend'}`);
+      console.error('Backend health check failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <PaperProvider theme={theme}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -34,18 +54,31 @@ function AppContent() {
           🏍️ Bike Health Tracker
         </Text>
         <Text variant="bodyLarge" style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Phase 1: Foundation Complete! ✅
+          Phase 2: API Client Setup ⚙️
         </Text>
         <Text variant="bodyMedium" style={[styles.description, { color: colors.textLight }]}>
-          Now with Zustand State Management 🐻
+          Testing Backend Connectivity
         </Text>
+
         <Button
           mode="contained"
-          onPress={() => console.log('Ready for Phase 2!')}
+          onPress={testBackendConnection}
+          loading={isLoading}
+          disabled={isLoading}
           style={styles.button}
         >
-          Get Started
+          Test Backend Connection
         </Button>
+
+        {apiStatus ? (
+          <Text
+            variant="bodyMedium"
+            style={[styles.status, { color: apiStatus.startsWith('✅') ? colors.success : colors.error }]}
+          >
+            {apiStatus}
+          </Text>
+        ) : null}
+
         <StatusBar style={isDarkMode ? 'light' : 'dark'} />
       </View>
     </PaperProvider>
@@ -81,5 +114,10 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 16,
+  },
+  status: {
+    marginTop: 16,
+    textAlign: 'center',
+    fontWeight: '600',
   },
 });

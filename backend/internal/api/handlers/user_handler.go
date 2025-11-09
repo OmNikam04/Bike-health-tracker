@@ -303,3 +303,42 @@ func (h *UserHandler) RefreshTokens(c *fiber.Ctx) error {
 		},
 	})
 }
+
+// Logout godoc
+// @Summary User logout
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param body body dto.RefreshTokenRequest true "Refresh token to revoke"
+// @Success 200 {object} dto.SuccessResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Router /user/logout [post]
+func (h *UserHandler) Logout(c *fiber.Ctx) error {
+	var req dto.RefreshTokenRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		logger.Error().Err(err).Msg("Invalid request body for logout")
+		return c.Status(fiber.StatusBadRequest).JSON(dto.ErrorResponse{
+			Error:   "invalid_request",
+			Message: "Invalid request body",
+		})
+	}
+
+	if err := ValidateStruct(c, &req); err != nil {
+		return err
+	}
+
+	if err := h.userService.Logout(req.RefreshToken); err != nil {
+		logger.Warn().Err(err).Msg("Logout failed")
+		return c.Status(fiber.StatusUnauthorized).JSON(dto.ErrorResponse{
+			Error:   "logout_failed",
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(dto.SuccessResponse{
+		Success: true,
+		Message: "Logged out successfully",
+	})
+}

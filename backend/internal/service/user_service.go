@@ -21,6 +21,7 @@ type UserService interface {
 	UpdateUser(id uuid.UUID, req *dto.UpdateUserRequest) (*dto.UserResponse, error)
 	DeleteUser(id uuid.UUID) error
 	Login(req *dto.LoginRequest) (*models.User, error)
+	Logout(refreshToken string) error
 	IssueRefreshToken(userID uuid.UUID) (string, error)
 	RefreshTokens(refreshToken string) (*models.User, string, error)
 }
@@ -172,6 +173,34 @@ func (s *userService) Login(req *dto.LoginRequest) (*models.User, error) {
 
 	logger.Info().Str("user_id", user.ID.String()).Msg("User logged in successfully")
 	return user, nil
+}
+
+// Logout revokes the provided refresh token, effectively logging out the user from that session
+func (s *userService) Logout(refreshToken string) error {
+	if refreshToken == "" {
+		return errors.New("refresh token is required")
+	}
+
+	hash := utils.HashToken(refreshToken)
+	rt, err := s.refreshRepository.FindByHash(hash)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// Token doesn't exist - already logged out or invalid
+			logger.Warn().Msg("Logout attempt with non-existent refresh token")
+			return errors.New("invalid refresh token")
+		}
+		logger.Error().Err(err).Msg("Failed to find refresh token for logout")
+		return err
+	}
+
+	// Revoke the refresh token
+	if err := s.refreshRepository.Revoke(rt.ID); err != nil {
+		logger.Error().Err(err).Str("token_id", rt.ID.String()).Msg("Failed to revoke refresh token")
+		return errors.New("logout failed")
+	}
+
+	logger.Info().Str("user_id", rt.UserID.String()).Msg("User logged out successfully")
+	return nil
 }
 
 // IssueRefreshToken generates and stores a new refresh token for the given user

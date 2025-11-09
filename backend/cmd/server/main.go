@@ -67,13 +67,14 @@ func main() {
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
-		AppName: "Bike Health Tracker API v1.0",
+		AppName:               "Bike Health Tracker API v1.0",
+		DisableStartupMessage: false,
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
 			if e, ok := err.(*fiber.Error); ok {
 				code = e.Code
 			}
-			log.Printf("❌ Error: %v", err)
+			log.Printf("❌ Error [%d]: %v | Path: %s | IP: %s", code, err, c.Path(), c.IP())
 			return c.Status(code).JSON(fiber.Map{
 				"error":   true,
 				"message": err.Error(),
@@ -103,8 +104,10 @@ func main() {
 		if port == "" {
 			port = "8080"
 		}
-		log.Printf("🚀 Server starting on port %s", port)
-		if err := app.Listen(fmt.Sprintf(":%s", port)); err != nil {
+		// Bind to all interfaces
+		listenAddr := fmt.Sprintf(":%s", port)
+		log.Printf("🚀 Server starting on %s (accessible on all network interfaces)", listenAddr)
+		if err := app.Listen(listenAddr); err != nil {
 			log.Fatalf("❌ Failed to start server: %v", err)
 		}
 	}()

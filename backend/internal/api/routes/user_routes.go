@@ -14,6 +14,8 @@ func SetupUserRoutes(router fiber.Router, h *Handlers, cfg *config.Config) {
 	users.Post("/signup", h.UserHandler.CreateUser)
 	users.Post("/login", h.UserHandler.Login)
 	users.Post("/refresh", h.UserHandler.RefreshTokens)
+	users.Post("/logout", h.UserHandler.Logout)
+
 	// Protected routes - require authentication
 	// Uses /me pattern - user can only access their own data
 	users.Get("/me", middleware.Auth(cfg), h.UserHandler.GetCurrentUser)

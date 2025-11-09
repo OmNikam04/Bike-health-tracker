@@ -9,11 +9,21 @@ import (
 func SetupHealthRoutes(app *fiber.App) {
 	// Health check endpoint
 	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
+		// Debug logging
+		println("🔍 Health check request from:", c.IP(), "| Host:", c.Hostname(), "| Protocol:", c.Protocol())
+
+		// Try to send response
+		err := c.JSON(fiber.Map{
 			"status":  "ok",
 			"service": "bike-health-tracker",
 			"version": "1.0.0",
 		})
+
+		if err != nil {
+			println("❌ Error sending JSON response:", err.Error())
+		}
+
+		return err
 	})
 
 	// Root endpoint - API information
@@ -28,4 +38,3 @@ func SetupHealthRoutes(app *fiber.App) {
 		})
 	})
 }
-
