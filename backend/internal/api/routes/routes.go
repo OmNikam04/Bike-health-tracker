@@ -8,9 +8,9 @@ import (
 
 // Handlers struct holds all handler instances
 type Handlers struct {
-	UserHandler *handlers.UserHandler
-	// Add more handlers as you create them:
-	// BikeHandler *handlers.BikeHandler
+	UserHandler    *handlers.UserHandler
+	BikeHandler    *handlers.BikeHandler
+	FuelLogHandler *handlers.FuelLogHandler
 }
 
 // SetupRoutes registers all application routes
@@ -23,7 +23,6 @@ func SetupRoutes(app *fiber.App, handlers *Handlers, cfg *config.Config) {
 
 	// Register resource-specific routes
 	SetupUserRoutes(api, handlers, cfg)
-
-	// Add more route groups as you create them:
-	// SetupBikeRoutes(api, handlers, cfg)
+	SetupBikeRoutes(api, handlers, cfg)
+	SetupFuelLogRoutes(api, handlers, cfg)
 }

@@ -2,12 +2,15 @@ package service
 
 import (
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/omnikam04/bike-health-tracker/internal/dto"
 	"github.com/omnikam04/bike-health-tracker/internal/logger"
 	"github.com/omnikam04/bike-health-tracker/internal/models"
 	"github.com/omnikam04/bike-health-tracker/internal/repository"
+	"github.com/omnikam04/bike-health-tracker/internal/utils"
+
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -18,14 +21,17 @@ type UserService interface {
 	UpdateUser(id uuid.UUID, req *dto.UpdateUserRequest) (*dto.UserResponse, error)
 	DeleteUser(id uuid.UUID) error
 	Login(req *dto.LoginRequest) (*models.User, error)
+	IssueRefreshToken(userID uuid.UUID) (string, error)
+	RefreshTokens(refreshToken string) (*models.User, string, error)
 }
 
 type userService struct {
-	userRepository repository.UserRepository
+	userRepository    repository.UserRepository
+	refreshRepository repository.RefreshTokenRepository
 }
 
-func NewUserService(userRepository repository.UserRepository) *userService {
-	return &userService{userRepository: userRepository}
+func NewUserService(userRepository repository.UserRepository, refreshRepository repository.RefreshTokenRepository) *userService {
+	return &userService{userRepository: userRepository, refreshRepository: refreshRepository}
 }
 
 func (s *userService) CreateUser(req *dto.CreateUserRequest) (*dto.UserResponse, error) {
@@ -166,4 +172,77 @@ func (s *userService) Login(req *dto.LoginRequest) (*models.User, error) {
 
 	logger.Info().Str("user_id", user.ID.String()).Msg("User logged in successfully")
 	return user, nil
+}
+
+// IssueRefreshToken generates and stores a new refresh token for the given user
+func (s *userService) IssueRefreshToken(userID uuid.UUID) (string, error) {
+	token, err := utils.GenerateSecureToken()
+	if err != nil {
+		logger.Error().Err(err).Msg("Failed to generate refresh token")
+		return "", err
+	}
+	hash := utils.HashToken(token)
+	rt := &models.RefreshToken{
+		UserID:    userID,
+		TokenHash: hash,
+		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
+	}
+	if err := s.refreshRepository.Create(rt); err != nil {
+		logger.Error().Err(err).Msg("Failed to persist refresh token")
+		return "", err
+	}
+	return token, nil
+}
+
+// RefreshTokens validates the provided refresh token, rotates it, and returns the user + new refresh token
+func (s *userService) RefreshTokens(refreshToken string) (*models.User, string, error) {
+	if refreshToken == "" {
+		return nil, "", errors.New("invalid refresh token")
+	}
+	hash := utils.HashToken(refreshToken)
+	rt, err := s.refreshRepository.FindByHash(hash)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, "", errors.New("invalid refresh token")
+		}
+		logger.Error().Err(err).Msg("Failed to find refresh token")
+		return nil, "", err
+	}
+	if rt.RevokedAt != nil {
+		logger.Warn().Msg("Attempt to use revoked refresh token")
+		return nil, "", errors.New("refresh token revoked")
+	}
+	if time.Now().After(rt.ExpiresAt) {
+		logger.Warn().Msg("Attempt to use expired refresh token")
+		return nil, "", errors.New("refresh token expired")
+	}
+
+	user, err := s.userRepository.FindByID(rt.UserID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, "", errors.New("user not found")
+		}
+		return nil, "", err
+	}
+
+	// Rotate: revoke old and create new
+	_ = s.refreshRepository.Revoke(rt.ID)
+
+	newToken, err := utils.GenerateSecureToken()
+	if err != nil {
+		logger.Error().Err(err).Msg("Failed to generate new refresh token")
+		return nil, "", err
+	}
+	newHash := utils.HashToken(newToken)
+	newRT := &models.RefreshToken{
+		UserID:    user.ID,
+		TokenHash: newHash,
+		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
+	}
+	if err := s.refreshRepository.Create(newRT); err != nil {
+		logger.Error().Err(err).Msg("Failed to persist new refresh token")
+		return nil, "", err
+	}
+
+	return user, newToken, nil
 }

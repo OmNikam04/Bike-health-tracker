@@ -44,16 +44,25 @@ func main() {
 
 	// Initialize repositories
 	userRepo := repository.NewUserRepository(database)
+	refreshRepo := repository.NewRefreshTokenRepository(database)
+	bikeRepo := repository.NewBikeRepository(database)
+	fuelLogRepo := repository.NewFuelLogRepository(database)
 
 	// Initialize services
-	userService := service.NewUserService(userRepo)
+	userService := service.NewUserService(userRepo, refreshRepo)
+	bikeService := service.NewBikeService(bikeRepo)
+	fuelLogService := service.NewFuelLogService(fuelLogRepo, bikeRepo)
 
 	// Initialize handlers (pass config for JWT)
 	userHandler := handlers.NewUserHandler(userService, cfg)
+	bikeHandler := handlers.NewBikeHandler(bikeService)
+	fuelLogHandler := handlers.NewFuelLogHandler(fuelLogService)
 
 	// Create handlers struct for routing
 	routeHandlers := &routes.Handlers{
-		UserHandler: userHandler,
+		UserHandler:    userHandler,
+		BikeHandler:    bikeHandler,
+		FuelLogHandler: fuelLogHandler,
 	}
 
 	// Create Fiber app

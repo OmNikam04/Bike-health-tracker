@@ -44,9 +44,9 @@ func migrateModels(db *gorm.DB) error {
 	// Add all your models here
 	models := []interface{}{
 		&models.User{},
-		// Add more models as you create them:
-		// &models.Bike{},
-		// &models.HealthRecord{},
+		&models.RefreshToken{},
+		&models.Bike{},
+		&models.FuelLog{},
 	}
 
 	for _, model := range models {
@@ -64,7 +64,9 @@ func migrateModels(db *gorm.DB) error {
 func DropAllTables(db *gorm.DB) error {
 	models := []interface{}{
 		&models.User{},
-		// Add all models here
+		&models.RefreshToken{},
+		&models.Bike{},
+		&models.FuelLog{},
 	}
 
 	for _, model := range models {
@@ -81,7 +83,7 @@ func DropAllTables(db *gorm.DB) error {
 // Only use this in development/testing
 func ResetDatabase(db *gorm.DB) error {
 	log.Println("⚠️  Resetting database...")
-	
+
 	if err := DropAllTables(db); err != nil {
 		return err
 	}
@@ -93,4 +95,3 @@ func ResetDatabase(db *gorm.DB) error {
 	log.Println("✅ Database reset completed")
 	return nil
 }
-

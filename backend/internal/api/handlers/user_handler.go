@@ -225,11 +225,21 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 	}
 
 	logger.Info().Str("user_id", user.ID.String()).Msg("User logged in successfully")
+	// Issue refresh token
+	refreshToken, err := h.userService.IssueRefreshToken(user.ID)
+	if err != nil {
+		logger.Error().Err(err).Str("user_id", user.ID.String()).Msg("Failed to generate refresh token")
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.ErrorResponse{
+			Error:   "token_generation_failed",
+			Message: "Failed to generate refresh token",
+		})
+	}
 
 	return c.JSON(dto.SuccessResponse{
 		Success: true,
 		Data: dto.LoginResponse{
-			Token: token,
+			Token:        token,
+			RefreshToken: refreshToken,
 			User: dto.UserResponse{
 				ID:        user.ID,
 				Name:      user.Name,
@@ -239,5 +249,57 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 			},
 		},
 		Message: "Login successful",
+	})
+}
+
+// RefreshTokens godoc
+// @Summary Refresh access token
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param body body dto.RefreshTokenRequest true "Refresh token"
+// @Success 200 {object} dto.SuccessResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Router /user/refresh [post]
+func (h *UserHandler) RefreshTokens(c *fiber.Ctx) error {
+	var req dto.RefreshTokenRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		logger.Error().Err(err).Msg("Invalid request body for refresh")
+		return c.Status(fiber.StatusBadRequest).JSON(dto.ErrorResponse{
+			Error:   "invalid_request",
+			Message: "Invalid request body",
+		})
+	}
+
+	if err := ValidateStruct(c, &req); err != nil {
+		return err
+	}
+
+	user, newRefreshToken, err := h.userService.RefreshTokens(req.RefreshToken)
+	if err != nil {
+		logger.Warn().Err(err).Msg("Refresh token invalid or expired")
+		return c.Status(fiber.StatusUnauthorized).JSON(dto.ErrorResponse{
+			Error:   "refresh_failed",
+			Message: err.Error(),
+		})
+	}
+
+	newAccessToken, err := utils.GenerateToken(user.ID, user.Email, h.config.JWTSecret)
+	if err != nil {
+		logger.Error().Err(err).Msg("Failed to generate new access token")
+		return c.Status(fiber.StatusInternalServerError).JSON(dto.ErrorResponse{
+			Error:   "token_generation_failed",
+			Message: "Failed to generate authentication token",
+		})
+	}
+
+	return c.JSON(dto.SuccessResponse{
+		Success: true,
+		Data: dto.RefreshTokenResponse{
+			Token:        newAccessToken,
+			RefreshToken: newRefreshToken,
+		},
 	})
 }
