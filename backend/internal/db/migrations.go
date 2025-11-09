@@ -20,6 +20,11 @@ func RunMigrations(db *gorm.DB) error {
 		return fmt.Errorf("failed to migrate models: %w", err)
 	}
 
+	// Run custom migrations
+	if err := runCustomMigrations(db); err != nil {
+		return fmt.Errorf("failed to run custom migrations: %w", err)
+	}
+
 	fmt.Println("✅ Database migrations completed successfully")
 	return nil
 }
@@ -56,6 +61,28 @@ func migrateModels(db *gorm.DB) error {
 		log.Printf("✅ Migrated model: %T", model)
 	}
 
+	return nil
+}
+
+// runCustomMigrations runs custom SQL migrations that can't be handled by AutoMigrate
+func runCustomMigrations(db *gorm.DB) error {
+	// Drop the old unique index if it exists
+	if err := db.Exec("DROP INDEX IF EXISTS idx_bikes_registration_number").Error; err != nil {
+		log.Printf("Warning: Failed to drop old index: %v", err)
+	}
+
+	// Create a partial unique index on registration_number that excludes soft-deleted records
+	// This allows the same registration number to be reused after a bike is soft-deleted
+	sql := `
+		CREATE UNIQUE INDEX IF NOT EXISTS idx_bikes_registration_number_active
+		ON bikes (registration_number)
+		WHERE deleted_at IS NULL AND registration_number != ''
+	`
+	if err := db.Exec(sql).Error; err != nil {
+		return fmt.Errorf("failed to create partial unique index on bikes.registration_number: %w", err)
+	}
+
+	log.Println("✅ Custom migrations completed")
 	return nil
 }
 

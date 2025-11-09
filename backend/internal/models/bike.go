@@ -21,7 +21,7 @@ type Bike struct {
 	Brand              string `json:"brand" gorm:"not null"`
 	Model              string `json:"model" gorm:"not null"`
 	Year               *int   `json:"year"`
-	RegistrationNumber string `json:"registration_number" gorm:"uniqueIndex"`
+	RegistrationNumber string `json:"registration_number" gorm:"index"`
 
 	// Purchase Info
 	PurchaseDate  *time.Time `json:"purchase_date"`
@@ -52,4 +52,3 @@ func (b *Bike) BeforeCreate(tx *gorm.DB) error {
 func (Bike) TableName() string {
 	return "bikes"
 }
-

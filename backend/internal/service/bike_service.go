@@ -22,12 +22,16 @@ type BikeService interface {
 
 // bikeService implements BikeService
 type bikeService struct {
-	bikeRepository repository.BikeRepository
+	bikeRepository    repository.BikeRepository
+	fuelLogRepository repository.FuelLogRepository
 }
 
 // NewBikeService creates a new bike service
-func NewBikeService(bikeRepository repository.BikeRepository) *bikeService {
-	return &bikeService{bikeRepository: bikeRepository}
+func NewBikeService(bikeRepository repository.BikeRepository, fuelLogRepository repository.FuelLogRepository) *bikeService {
+	return &bikeService{
+		bikeRepository:    bikeRepository,
+		fuelLogRepository: fuelLogRepository,
+	}
 }
 
 // CreateBike creates a new bike for a user
@@ -176,12 +180,19 @@ func (s *bikeService) DeleteBike(userID uuid.UUID, bikeID uuid.UUID) error {
 		return errors.New("unauthorized access to bike")
 	}
 
+	// First, soft delete all fuel logs for this bike
+	if err := s.fuelLogRepository.DeleteByBikeID(bikeID); err != nil {
+		logger.Error().Err(err).Msg("Failed to delete fuel logs for bike")
+		return err
+	}
+
+	// Then, soft delete the bike
 	if err := s.bikeRepository.Delete(bikeID); err != nil {
 		logger.Error().Err(err).Msg("Failed to delete bike")
 		return err
 	}
 
-	logger.Info().Str("bike_id", bikeID.String()).Msg("Bike deleted successfully")
+	logger.Info().Str("bike_id", bikeID.String()).Msg("Bike and associated fuel logs deleted successfully")
 
 	return nil
 }
@@ -218,4 +229,3 @@ func (s *bikeService) toBikeResponse(bike *models.Bike) *dto.BikeResponse {
 
 	return response
 }
-

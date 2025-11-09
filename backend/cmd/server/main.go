@@ -50,7 +50,7 @@ func main() {
 
 	// Initialize services
 	userService := service.NewUserService(userRepo, refreshRepo)
-	bikeService := service.NewBikeService(bikeRepo)
+	bikeService := service.NewBikeService(bikeRepo, fuelLogRepo)
 	fuelLogService := service.NewFuelLogService(fuelLogRepo, bikeRepo)
 
 	// Initialize handlers (pass config for JWT)
