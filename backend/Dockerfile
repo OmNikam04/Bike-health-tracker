@@ -1,6 +1,5 @@
 # ------------ PRODUCTION DOCKERFILE ------------
 # Multi-stage build for smaller image size
-# Railway deployment - Updated 2025-11-16
 
 # Stage 1: Build the Go binary
 FROM golang:1.25-alpine AS builder
