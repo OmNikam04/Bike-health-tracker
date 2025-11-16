@@ -19,20 +19,20 @@ Thumbs.db
 
 # Documentation
 *.md
-README.md
+!RAILWAY_DEPLOYMENT.md
 docs/
 
 # Test files
 *_test.go
 testdata/
 
-# Environment files (already copied via env_file in docker-compose)
-.env.example
+# Environment files
+.env
+.env.local
 
 # Docker files (not needed inside container)
-Dockerfile
+Dockerfile.dev
 docker-compose.yml
-.dockerignore
 
 # CI/CD
 .github/
