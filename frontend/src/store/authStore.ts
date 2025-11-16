@@ -7,8 +7,9 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, LoginResponse } from '../types/models.types';
-import { LoginRequest, SignupRequest, ApiError } from '../types/api.types';
+import { LoginRequest, SignupRequest, UpdateUserRequest, ApiError } from '../types/api.types';
 import * as authApi from '../api/auth.api';
+import * as userApi from '../api/user.api';
 import { saveTokens, clearAllAuthData, saveUserData, getRefreshToken } from '../utils/storage';
 
 interface AuthState {
@@ -22,13 +23,15 @@ interface AuthState {
   login: (credentials: LoginRequest) => Promise<void>;
   signup: (userData: SignupRequest) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (userData: UpdateUserRequest) => Promise<void>;
+  deleteAccount: () => Promise<void>;
   clearError: () => void;
   setUser: (user: User | null) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       // Initial State
       user: null,
       isAuthenticated: false,
@@ -145,6 +148,66 @@ export const useAuthStore = create<AuthState>()(
           });
 
           console.log('✅ Logged out successfully');
+        }
+      },
+
+      // Update Profile Action
+      updateProfile: async (userData: UpdateUserRequest) => {
+        set({ isLoading: true, error: null });
+
+        try {
+          const updatedUser = await userApi.updateUser(userData);
+
+          // Save updated user data
+          await saveUserData(updatedUser);
+
+          // Update state
+          set({
+            user: updatedUser,
+            isLoading: false,
+            error: null,
+          });
+
+          console.log('✅ Profile updated successfully:', updatedUser.email);
+        } catch (error: any) {
+          const apiError = error as ApiError;
+          set({
+            isLoading: false,
+            error: apiError.message || 'Profile update failed',
+          });
+          console.error('❌ Profile update failed:', apiError.message);
+          throw error;
+        }
+      },
+
+      // Delete Account Action
+      deleteAccount: async () => {
+        set({ isLoading: true, error: null });
+
+        try {
+          // Call delete API
+          await userApi.deleteUser();
+
+          // Clear all auth data
+          await clearAllAuthData();
+
+          // Reset state
+          set({
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+            error: null,
+          });
+
+          console.log('✅ Account deleted successfully');
+        } catch (error: any) {
+          const apiError = error as ApiError;
+          set({
+            isLoading: false,
+            error: apiError.message || 'Account deletion failed',
+          });
+          console.error('❌ Account deletion failed:', apiError.message);
+          throw error;
         }
       },
 

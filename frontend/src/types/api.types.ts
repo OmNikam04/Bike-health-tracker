@@ -32,30 +32,10 @@ export interface RefreshTokenRequest {
   refreshToken: string;
 }
 
-// Form Data Types (for UI)
-export interface LoginFormData {
-  email: string;
-  password: string;
-}
-
-export interface SignupFormData {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
-
-// Form Error Types (for UI validation)
-export interface LoginFormErrors {
-  email?: string;
-  password?: string;
-}
-
-export interface SignupFormErrors {
+export interface UpdateUserRequest {
   name?: string;
   email?: string;
   password?: string;
-  confirmPassword?: string;
 }
 
 // Bike Request Types
