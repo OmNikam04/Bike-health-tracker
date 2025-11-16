@@ -1,19 +1,53 @@
-# ------------ DEV DOCKERFILE (with Air) ------------
-FROM golang:1.25-alpine
+# ------------ PRODUCTION DOCKERFILE ------------
+# Multi-stage build for smaller image size
+# Railway deployment - Updated 2025-11-16
 
-# Create app directory to hold your app's source code
+# Stage 1: Build the Go binary
+FROM golang:1.25-alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache git
+
+# Set working directory
 WORKDIR /app
 
-# Effectively tracks changes within your go.mod file
+# Copy go mod files
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the source code into the container
-COPY . . 
-# Remember workdir is already set to /app so no need to specify "COPY . /app" again
+# Copy source code
+COPY . .
 
-# Install air for live reload
-RUN go install github.com/air-verse/air@latest
+# Build the binary
+# CGO_ENABLED=0 for static binary
+# -ldflags="-w -s" to reduce binary size
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /app/server ./cmd/server
 
-# Run the app
-CMD ["air"]
+# Stage 2: Create minimal runtime image
+FROM alpine:latest
+
+# Install ca-certificates for HTTPS requests
+RUN apk --no-cache add ca-certificates tzdata
+
+# Create non-root user
+RUN addgroup -g 1000 appuser && \
+    adduser -D -u 1000 -G appuser appuser
+
+# Set working directory
+WORKDIR /app
+
+# Copy binary from builder
+COPY --from=builder /app/server .
+
+# Change ownership to non-root user
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
+
+# Expose port (Railway will set PORT env var)
+EXPOSE 8080
+
+# Run the binary
+CMD ["./server"]
+
