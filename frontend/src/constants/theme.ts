@@ -1,93 +1,93 @@
 /**
- * Theme Constants
- * Modern color scheme with blue/teal palette for a tech-forward look
+ * Theme Constants - Shadcn/UI Inspired
+ * Clean, modern design with excellent contrast and readability
  * Supports both light and dark modes
  */
 
-// Light Theme Colors
+// Light Theme Colors - Shadcn/UI Inspired (Clean, Modern)
 export const LightColors = {
-  // Primary Colors
-  primary: '#0066FF',        // Vibrant Blue
-  primaryLight: '#3385FF',   // Lighter Blue
-  primaryDark: '#0052CC',    // Darker Blue
+  // Primary Colors - Slate (Shadcn default)
+  primary: '#0F172A',        // Slate 900 (main accent)
+  primaryLight: '#334155',   // Slate 700
+  primaryDark: '#020617',    // Slate 950
 
-  // Secondary Colors
-  secondary: '#00D9FF',      // Bright Teal
-  secondaryLight: '#33E0FF', // Lighter Teal
-  secondaryDark: '#00B8D9',  // Darker Teal
+  // Secondary Colors - Zinc (Subtle, Professional)
+  secondary: '#18181B',      // Zinc 900
+  secondaryLight: '#3F3F46', // Zinc 700
+  secondaryDark: '#09090B',  // Zinc 950
 
-  // Accent Colors
-  accent: '#FF6B35',         // Energetic Orange
-  accentLight: '#FF8A5C',    // Lighter Orange
-  accentDark: '#E65A2E',     // Darker Orange
+  // Accent Colors - Neutral (Muted)
+  accent: '#737373',         // Neutral 500
+  accentLight: '#A3A3A3',    // Neutral 400
+  accentDark: '#525252',     // Neutral 600
 
-  // Neutral Colors
-  background: '#F8F9FA',     // Light Gray Background
-  surface: '#FFFFFF',        // White Surface
-  surfaceVariant: '#F1F3F5', // Slightly darker surface
+  // Neutral Colors - Clean & Subtle
+  background: '#FFFFFF',     // White
+  surface: '#F8FAFC',        // Slate 50 (subtle depth)
+  surfaceVariant: '#F1F5F9', // Slate 100 (cards)
 
   // Text Colors
-  text: '#1C1C1E',           // Dark Text
-  textSecondary: '#6C757D',  // Gray Text
-  textLight: '#ADB5BD',      // Light Gray Text
-  textOnPrimary: '#FFFFFF',  // White text on primary
+  text: '#020617',           // Slate 950 (high contrast)
+  textSecondary: '#64748B',  // Slate 500 (muted)
+  textLight: '#94A3B8',      // Slate 400 (subtle)
+  textOnPrimary: '#F8FAFC',  // Slate 50 on dark
 
-  // Status Colors
-  success: '#34C759',        // Green
-  error: '#FF3B30',          // Red
-  warning: '#FFCC00',        // Yellow
-  info: '#007AFF',           // Blue
+  // Status Colors - Shadcn palette
+  success: '#22C55E',        // Green 500
+  error: '#EF4444',          // Red 500
+  warning: '#F59E0B',        // Amber 500
+  info: '#3B82F6',           // Blue 500
 
-  // Border & Divider
-  border: '#E9ECEF',         // Light border
-  divider: '#DEE2E6',        // Divider
+  // Border & Divider - Very subtle
+  border: '#E2E8F0',         // Slate 200
+  divider: '#CBD5E1',        // Slate 300
 
   // Overlay
-  overlay: 'rgba(0, 0, 0, 0.5)',
-  overlayLight: 'rgba(0, 0, 0, 0.3)',
+  overlay: 'rgba(15, 23, 42, 0.5)',      // Slate 900 with opacity
+  overlayLight: 'rgba(15, 23, 42, 0.3)',
 };
 
-// Dark Theme Colors - Modern Dark Slate with Vibrant Orange Accents
+// Dark Theme Colors - Shadcn/UI Exact Match (Elegant, Modern)
 export const DarkColors = {
-  // Primary Colors - Vibrant Orange (Main brand color in dark mode)
-  primary: '#FF6B35',        // Vibrant Orange (main accent)
-  primaryLight: '#FF8A5C',   // Lighter Orange
-  primaryDark: '#E65A2E',    // Darker Orange
+  // Primary Colors - Light accent on dark (shadcn style)
+  primary: '#FAFAFA',        // Zinc 50 (main accent in dark)
+  primaryLight: '#F4F4F5',   // Zinc 100
+  primaryDark: '#E4E4E7',    // Zinc 200
 
-  // Secondary Colors - Warm Coral/Peach
-  secondary: '#FF9E6D',      // Warm Coral
-  secondaryLight: '#FFB088', // Light Peach
-  secondaryDark: '#FF7A47',  // Deep Coral
+  // Secondary Colors - Muted
+  secondary: '#F5F5F5',      // Neutral 100
+  secondaryLight: '#E5E5E5', // Neutral 200
+  secondaryDark: '#D4D4D4',  // Neutral 300
 
-  // Accent Colors - Electric Orange
-  accent: '#FF5722',         // Electric Orange (for CTAs)
-  accentLight: '#FF7043',    // Bright Orange
-  accentDark: '#E64A19',     // Deep Orange
+  // Accent Colors - Subtle
+  accent: '#A1A1AA',         // Zinc 400
+  accentLight: '#D4D4D8',    // Zinc 300
+  accentDark: '#71717A',     // Zinc 500
 
-  // Neutral Colors - Dark Slate/Charcoal
-  background: '#0F0F0F',     // Almost Black (OLED friendly)
-  surface: '#1A1A1A',        // Dark Charcoal
-  surfaceVariant: '#252525', // Lighter Charcoal
+  // Neutral Colors - Very Dark (Shadcn exact)
+  background: '#09090B',     // Zinc 950 (almost black background)
+  surface: '#18181B',        // Zinc 900 (cards - slightly lighter than bg)
+  surfaceVariant: '#27272A', // Zinc 800 (elevated cards)
 
   // Text Colors
-  text: '#FFFFFF',           // Pure White
-  textSecondary: '#B8B8B8',  // Light Gray
-  textLight: '#8A8A8A',      // Medium Gray
-  textOnPrimary: '#FFFFFF',  // White on orange
+  text: '#FAFAFA',           // Zinc 50 (high contrast)
+  textSecondary: '#A1A1AA',  // Zinc 400 (muted)
+  textLight: '#71717A',      // Zinc 500 (subtle)
+  textOnPrimary: '#09090B',  // Zinc 950 on light
 
-  // Status Colors
-  success: '#4CAF50',        // Green
-  error: '#FF5252',          // Bright Red
-  warning: '#FFC107',        // Amber
-  info: '#2196F3',           // Blue
+  // Status Colors - Shadcn palette
+  success: '#22C55E',        // Green 500
+  error: '#EF4444',          // Red 500
+  warning: '#F59E0B',        // Amber 500
+  info: '#3B82F6',           // Blue 500
 
-  // Border & Divider
-  border: '#2A2A2A',         // Subtle border
-  divider: '#333333',        // Divider
+  // Border & Divider - Extremely subtle (key to shadcn look)
+  border: '#27272A',         // Zinc 800 (barely visible)
+  divider: '#3F3F46',        // Zinc 700
 
   // Overlay
-  overlay: 'rgba(0, 0, 0, 0.85)',
-  overlayLight: 'rgba(0, 0, 0, 0.6)',
+  overlay: 'rgba(9, 9, 11, 0.85)',       // Zinc 950 with opacity
+  overlayLight: 'rgba(9, 9, 11, 0.6)',
 };
 
 // Default to light colors for backward compatibility

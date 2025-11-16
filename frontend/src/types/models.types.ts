@@ -25,19 +25,67 @@ export interface Bike {
   updatedAt: string;
 }
 
-// Fuel Log Model
+// Fuel Log Model (matches backend FuelLogResponse)
 export interface FuelLog {
-  id: number;
-  bikeId: number;
-  date: string;
-  odometer: number;
-  fuelAmount: number;
-  cost: number;
-  fuelType: string;
+  id: string; // UUID
+  bike_id: string; // UUID
+  date: string; // ISO 8601 datetime
+  odometer_reading: number;
+  liters: number;
+  price_per_liter: number;
+  total_cost: number; // calculated
+  fuel_type: string; // "petrol", "diesel"
+  mileage?: number | null; // calculated
+  distance_covered?: number | null; // calculated
+  is_full_tank: boolean;
+  location: string;
+  notes: string;
+  created_at: string; // ISO 8601 datetime
+  updated_at: string; // ISO 8601 datetime
+}
+
+// Create Fuel Log Request
+export interface CreateFuelLogRequest {
+  date: string; // ISO 8601 datetime
+  odometer_reading: number; // required, min=0
+  liters: number; // required, min=0
+  price_per_liter: number; // required, min=0
+  fuel_type?: string; // "petrol" | "diesel"
+  is_full_tank?: boolean;
+  location?: string;
   notes?: string;
-  mileage?: number;
-  createdAt: string;
-  updatedAt: string;
+}
+
+// Update Fuel Log Request (all fields optional)
+export interface UpdateFuelLogRequest {
+  date?: string; // ISO 8601 datetime
+  odometer_reading?: number;
+  liters?: number;
+  price_per_liter?: number;
+  fuel_type?: string;
+  is_full_tank?: boolean;
+  location?: string;
+  notes?: string;
+}
+
+// Fuel Log List Response Data
+export interface FuelLogListResponseData {
+  fuel_logs: FuelLog[];
+  total: number;
+}
+
+// Fuel Stats Response
+export interface FuelStats {
+  bike_id: string; // UUID
+  total_fuel_logs: number;
+  total_liters: number;
+  total_cost: number;
+  total_distance: number;
+  average_mileage?: number | null;
+  latest_mileage?: number | null;
+  best_mileage?: number | null;
+  worst_mileage?: number | null;
+  average_cost_per_km?: number | null;
 }
 
 // Auth Tokens
@@ -67,12 +115,17 @@ export interface LoginResponse {
   message?: string;
 }
 
+// Signup Response Data (inside SuccessResponse.data)
+export interface SignupResponseData {
+  user: User;
+  token: string;
+  refresh_token: string;
+}
+
 // Signup Response (full response from backend)
-// Note: Backend only returns user data, not tokens
-// Tokens are obtained via separate login call
 export interface SignupResponse {
   success: boolean;
-  data: User; // Backend returns User directly, not wrapped
+  data: SignupResponseData;
   message?: string;
 }
 

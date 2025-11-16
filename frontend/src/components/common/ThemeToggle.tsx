@@ -1,72 +1,51 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { IconButton, Menu } from 'react-native-paper';
+import { IconButton, Menu, useTheme, SegmentedButtons } from 'react-native-paper';
 import { useThemeStore, useIsDarkMode } from '../../store/themeStore';
-import { getColors } from '../../constants/theme';
 
 export const ThemeToggle: React.FC = () => {
+  const theme = useTheme();
+  const isDarkMode = useIsDarkMode();
   const themeMode = useThemeStore((state) => state.themeMode);
   const setThemeMode = useThemeStore((state) => state.setThemeMode);
-  const isDarkMode = useIsDarkMode();
-  const colors = getColors(isDarkMode);
-  const [visible, setVisible] = React.useState(false);
 
-  const openMenu = () => setVisible(true);
-  const closeMenu = () => setVisible(false);
-
-  const handleThemeChange = (mode: 'light' | 'dark' | 'auto') => {
-    setThemeMode(mode);
-    closeMenu();
-  };
-
-  const getIcon = () => {
-    if (themeMode === 'auto') return 'theme-light-dark';
-    return isDarkMode ? 'weather-night' : 'weather-sunny';
-  };
+  // In light mode: selected = white text on slate 900 background
+  // In dark mode: selected = dark text on slate 50 background
+  const checkedColor = isDarkMode ? '#0F172A' : '#FFFFFF'; // Dark text in dark mode, white in light mode
+  const uncheckedColor = theme.colors.onSurface; // Normal text for unselected
 
   return (
-    <View style={styles.container}>
-      <Menu
-        visible={visible}
-        onDismiss={closeMenu}
-        anchor={
-          <IconButton
-            icon={getIcon()}
-            size={24}
-            onPress={openMenu}
-            iconColor={colors.text}
-          />
-        }
-      >
-        <Menu.Item
-          onPress={() => handleThemeChange('light')}
-          title="Light"
-          leadingIcon="weather-sunny"
-          trailingIcon={themeMode === 'light' ? 'check' : undefined}
-        />
-        <Menu.Item
-          onPress={() => handleThemeChange('dark')}
-          title="Dark"
-          leadingIcon="weather-night"
-          trailingIcon={themeMode === 'dark' ? 'check' : undefined}
-        />
-        <Menu.Item
-          onPress={() => handleThemeChange('auto')}
-          title="Auto"
-          leadingIcon="theme-light-dark"
-          trailingIcon={themeMode === 'auto' ? 'check' : undefined}
-        />
-      </Menu>
-    </View>
+    <SegmentedButtons
+      value={themeMode}
+      onValueChange={(value) => setThemeMode(value as 'light' | 'dark' | 'auto')}
+      buttons={[
+        {
+          value: 'light',
+          label: 'Light',
+          icon: 'weather-sunny',
+          checkedColor: checkedColor,
+          uncheckedColor: uncheckedColor,
+          style: themeMode === 'light' ? { backgroundColor: theme.colors.primary } : undefined,
+        },
+        {
+          value: 'dark',
+          label: 'Dark',
+          icon: 'weather-night',
+          checkedColor: checkedColor,
+          uncheckedColor: uncheckedColor,
+          style: themeMode === 'dark' ? { backgroundColor: theme.colors.primary } : undefined,
+        },
+        {
+          value: 'auto',
+          label: 'Auto',
+          icon: 'theme-light-dark',
+          checkedColor: checkedColor,
+          uncheckedColor: uncheckedColor,
+          style: themeMode === 'auto' ? { backgroundColor: theme.colors.primary } : undefined,
+        },
+      ]}
+      style={{ backgroundColor: theme.colors.surface }}
+    />
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    top: 40,
-    right: 10,
-    zIndex: 1000,
-  },
-});
 

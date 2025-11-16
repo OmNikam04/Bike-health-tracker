@@ -6,7 +6,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User, LoginResponse, SignupResponse } from '../types/models.types';
+import { User, LoginResponse } from '../types/models.types';
 import { LoginRequest, SignupRequest, ApiError } from '../types/api.types';
 import * as authApi from '../api/auth.api';
 import { saveTokens, clearAllAuthData, saveUserData, getRefreshToken } from '../utils/storage';
@@ -79,8 +79,7 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           // Step 1: Create the user account
-          const signupResponse: SignupResponse = await authApi.signup(userData);
-          console.log('✅ User account created:', signupResponse.data.email);
+          await authApi.signup(userData);
 
           // Step 2: Auto-login with the same credentials
           const loginResponse: LoginResponse = await authApi.login({
@@ -126,12 +125,10 @@ export const useAuthStore = create<AuthState>()(
         try {
           // Get refresh token before clearing
           const refreshToken = await getRefreshToken();
-          console.log('🔑 Refresh token for logout:', refreshToken ? 'Found' : 'Not found');
 
           // Call logout API to revoke refresh token on server
           if (refreshToken) {
             await authApi.logout(refreshToken);
-            console.log('✅ Logout API call successful');
           }
         } catch (error) {
           console.error('Logout API error:', error);

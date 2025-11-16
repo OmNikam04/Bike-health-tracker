@@ -11,8 +11,11 @@ export type AuthStackParamList = {
 
 // App Stack (Main app screens - authenticated)
 export type AppStackParamList = {
-  Home: undefined;
-  // Add more screens here as we build them
+  MainTabs: undefined;
+  AddBike: undefined;
+  BikeDetails: { bikeId: string };
+  AddFuelLog: { bikeId: string };
+  FuelLogDetails: { bikeId: string; fuelLogId: string };
 };
 
 // Root Stack (Auth or App)

@@ -159,17 +159,26 @@ export const handleApiError = (error: any): ApiError => {
       const responseData = axiosError.response.data;
 
       // Try to extract error message from various response formats
+      // Priority: error field (backend validation errors) > message field > default
       let errorMessage = 'An error occurred';
 
       if (typeof responseData === 'string') {
         errorMessage = responseData;
+      } else if (responseData?.error) {
+        // Backend sends validation errors in 'error' field
+        errorMessage = responseData.error;
       } else if (responseData?.message) {
         errorMessage = responseData.message;
-      } else if (responseData?.error) {
-        errorMessage = responseData.error;
       } else if (responseData?.errors) {
-        errorMessage = JSON.stringify(responseData.errors);
+        // Handle array of errors
+        if (Array.isArray(responseData.errors)) {
+          errorMessage = responseData.errors.join(', ');
+        } else {
+          errorMessage = JSON.stringify(responseData.errors);
+        }
       }
+
+      console.log('✅ Extracted error message:', errorMessage);
 
       return {
         message: errorMessage,
