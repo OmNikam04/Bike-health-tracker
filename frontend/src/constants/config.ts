@@ -7,7 +7,7 @@ import { API_BASE_URL } from '@env';
 
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: API_BASE_URL || 'https://unapposable-uncalmative-willow.ngrok-free.dev/api/v1',
+  BASE_URL: API_BASE_URL || 'https://robust-spirit-production.up.railway.app/api/v1',
   TIMEOUT: 30000, // 30 seconds
   RETRY_ATTEMPTS: 3,
 };
