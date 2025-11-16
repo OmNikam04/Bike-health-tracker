@@ -3,14 +3,11 @@
  * Central configuration for the application
  */
 
+import { API_BASE_URL } from '@env';
+
 // API Configuration
 export const API_CONFIG = {
-  // For local network (if WiFi is working):
-  // BASE_URL: 'http://192.168.1.17:8080/api/v1',
-
-  // For ngrok (replace with your actual ngrok URL):
-  BASE_URL: 'https://YOUR-NGROK-URL.ngrok-free.app/api/v1',
-
+  BASE_URL: API_BASE_URL || 'https://unapposable-uncalmative-willow.ngrok-free.dev/api/v1',
   TIMEOUT: 30000, // 30 seconds
   RETRY_ATTEMPTS: 3,
 };

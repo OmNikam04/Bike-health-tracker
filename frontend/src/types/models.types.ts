@@ -5,11 +5,11 @@
 
 // User Model
 export interface User {
-  id: number;
+  id: string; // UUID from backend
   email: string;
   name: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // Bike Model
@@ -46,23 +46,46 @@ export interface AuthTokens {
   refreshToken: string;
 }
 
-// Login Response
+// Backend wraps responses in this format
+export interface BackendSuccessResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+}
+
+// Login Response Data (inside SuccessResponse.data)
+export interface LoginResponseData {
+  user: User;
+  token: string;
+  refresh_token: string;
+}
+
+// Login Response (full response from backend)
 export interface LoginResponse {
-  user: User;
-  accessToken: string;
-  refreshToken: string;
+  success: boolean;
+  data: LoginResponseData;
+  message?: string;
 }
 
-// Signup Response
+// Signup Response (full response from backend)
+// Note: Backend only returns user data, not tokens
+// Tokens are obtained via separate login call
 export interface SignupResponse {
-  user: User;
-  accessToken: string;
-  refreshToken: string;
+  success: boolean;
+  data: User; // Backend returns User directly, not wrapped
+  message?: string;
 }
 
-// Refresh Token Response
+// Refresh Token Response Data
+export interface RefreshTokenResponseData {
+  token: string;
+  refresh_token: string;
+}
+
+// Refresh Token Response (full response from backend)
 export interface RefreshTokenResponse {
-  accessToken: string;
-  refreshToken: string;
+  success: boolean;
+  data: RefreshTokenResponseData;
+  message?: string;
 }
 

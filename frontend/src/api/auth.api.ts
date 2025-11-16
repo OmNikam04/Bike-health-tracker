@@ -3,12 +3,13 @@
  * Authentication endpoints
  */
 
+import axios from 'axios';
 import apiClient, { handleApiError } from './client';
+import { API_CONFIG } from '../constants/config';
 import {
   LoginRequest,
   SignupRequest,
   RefreshTokenRequest,
-  ApiError,
 } from '../types/api.types';
 import {
   LoginResponse,
@@ -16,7 +17,6 @@ import {
   RefreshTokenResponse,
   User,
 } from '../types/models.types';
-import axios from 'axios';
 
 /**
  * Login
@@ -62,12 +62,15 @@ export const refreshToken = async (
 /**
  * Logout
  */
-export const logout = async (): Promise<void> => {
+export const logout = async (refreshToken: string): Promise<void> => {
   try {
-    await apiClient.post('/user/logout');
+    await apiClient.post('/user/logout', {
+      refresh_token: refreshToken,
+    });
   } catch (error) {
     // Even if logout fails on server, we'll clear local data
     console.error('Logout error:', error);
+    throw error;
   }
 };
 
@@ -88,7 +91,14 @@ export const getCurrentUser = async (): Promise<User> => {
  */
 export const healthCheck = async (): Promise<{ status: string; message: string }> => {
   try {
-    const response = await axios.get('https://unapposable-uncalmative-willow.ngrok-free.dev/health');
+    // Remove /api/v1 from base URL to get the root health endpoint
+    const baseUrl = API_CONFIG.BASE_URL.replace('/api/v1', '');
+    const healthUrl = `${baseUrl}/health`;
+
+    console.log('🔍 Health check URL:', healthUrl);
+    console.log('🔍 API_CONFIG.BASE_URL:', API_CONFIG.BASE_URL);
+
+    const response = await axios.get(healthUrl);
     return response.data;
   } catch (error) {
     throw handleApiError(error);

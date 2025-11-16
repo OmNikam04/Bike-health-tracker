@@ -100,8 +100,8 @@ apiClient.interceptors.response.use(
 
         // Call refresh token endpoint
         const response = await axios.post(
-          `${API_CONFIG.BASE_URL}/auth/refresh`,
-          { refreshToken },
+          `${API_CONFIG.BASE_URL}/user/refresh`,
+          { refresh_token: refreshToken },
           {
             headers: {
               'Content-Type': 'application/json',
@@ -109,18 +109,18 @@ apiClient.interceptors.response.use(
           }
         );
 
-        const { accessToken, refreshToken: newRefreshToken } = response.data;
+        const { token, refresh_token } = response.data.data;
 
         // Save new tokens
-        await saveTokens(accessToken, newRefreshToken);
+        await saveTokens(token, refresh_token);
 
         // Update authorization header
         if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+          originalRequest.headers.Authorization = `Bearer ${token}`;
         }
 
         // Process queued requests
-        processQueue(null, accessToken);
+        processQueue(null, token);
 
         // Retry original request
         return apiClient(originalRequest);
@@ -144,14 +144,36 @@ apiClient.interceptors.response.use(
  * Converts axios errors to ApiError format
  */
 export const handleApiError = (error: any): ApiError => {
+  console.log('🔍 API Error Details:', {
+    isAxiosError: axios.isAxiosError(error),
+    response: error?.response?.data,
+    status: error?.response?.status,
+    message: error?.message,
+  });
+
   if (axios.isAxiosError(error)) {
-    const axiosError = error as AxiosError<ApiError>;
-    
+    const axiosError = error as AxiosError<any>;
+
     if (axiosError.response) {
       // Server responded with error
+      const responseData = axiosError.response.data;
+
+      // Try to extract error message from various response formats
+      let errorMessage = 'An error occurred';
+
+      if (typeof responseData === 'string') {
+        errorMessage = responseData;
+      } else if (responseData?.message) {
+        errorMessage = responseData.message;
+      } else if (responseData?.error) {
+        errorMessage = responseData.error;
+      } else if (responseData?.errors) {
+        errorMessage = JSON.stringify(responseData.errors);
+      }
+
       return {
-        message: axiosError.response.data?.message || 'An error occurred',
-        error: axiosError.response.data?.error,
+        message: errorMessage,
+        error: responseData?.error,
         statusCode: axiosError.response.status,
       };
     } else if (axiosError.request) {
